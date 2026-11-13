@@ -1,0 +1,149 @@
+import Link from "next/link";
+import { Icon } from "@/components/icons";
+import { ProductGrid } from "@/components/product-grid";
+export default function Home() {
+  return (
+    <main id="main-content">
+      <section className="hero">
+        <div className="container hero-inner">
+          <div className="hero-copy">
+            <p className="hero-eyebrow">Handmade Jute Products</p>
+            <h1>
+              The Art of
+              <br />
+              <span>
+                Sustainable
+                <br />
+                Living
+              </span>
+            </h1>
+            <p className="hero-description">
+              Bangladesh’s golden fiber, shaped by skilled hands into bags you’ll carry every day.
+            </p>
+            <Link href="/shop" className="button hero-button">
+              Shop now <Icon name="arrow" />
+            </Link>
+            <div className="hero-values">
+              <div>
+                Handmade<span>by artisans</span>
+              </div>
+              <div>
+                Natural jute<span>Golden fiber</span>
+              </div>
+              <div>
+                Made to travel<span>Every day, everywhere</span>
+              </div>
+            </div>
+          </div>
+          <div className="hero-art" aria-label="Noksa brand placeholder">
+            <div className="brand-seal">
+              <span className="seal-top">Rooted in nature</span>
+              <span className="seal-bangla" lang="bn">
+                নকশা
+              </span>
+              <span className="seal-name">NOKSA</span>
+              <span className="seal-bottom">The art of sustainable living</span>
+            </div>
+            <p>
+              Simple materials.
+              <br />
+              Beautiful possibilities.
+            </p>
+          </div>
+        </div>
+      </section>
+      <div className="brand-strip">
+        <span>Handmade Jute Products</span>
+        <span className="strip-flower" aria-hidden="true">
+          ✳
+        </span>
+        <span>Handmade in Bangladesh</span>
+        <span className="strip-flower" aria-hidden="true">
+          ✳
+        </span>
+        <span>Natural by nature</span>
+        <span className="strip-flower" aria-hidden="true">
+          ✳
+        </span>
+        <span>Made for everyday living</span>
+      </div>
+      <section className="collection section-space container" aria-labelledby="collection-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Thoughtful things, everyday use</p>
+            <h2 id="collection-title">Naturally, your kind of everyday.</h2>
+          </div>
+          <Link href="/shop" className="inline-link">
+            Explore the collection <Icon name="arrow" />
+          </Link>
+        </div>
+        <ProductGrid />
+      </section>
+      <section id="our-story" className="story-section">
+        <div className="container story-layout">
+          <div className="story-visual">
+            <span className="story-bangla" lang="bn" aria-hidden="true">
+              পাট
+            </span>
+            <span>Jute. Our golden beginning.</span>
+          </div>
+          <div className="story-copy">
+            <p className="eyebrow">Our story</p>
+            <h2>
+              From our roots,
+              <br />
+              to your everyday.
+            </h2>
+            <p>
+              In Bangladesh, jute is known as the golden fiber. At Noksa, it’s the starting point
+              for useful, beautiful things that feel at home in your life.
+            </p>
+            <p>
+              We believe in natural materials, the character of handmade work, and thoughtful design
+              that stays with you.
+            </p>
+            <Link href="/shop" className="inline-link">
+              Find your everyday companion <Icon name="arrow" />
+            </Link>
+          </div>
+        </div>
+      </section>
+      <section className="values-section container section-space" aria-label="Our values">
+        <div>
+          <Icon name="hand" />
+          <h3>A human touch</h3>
+          <p>Celebrating the care and character of work made by hand.</p>
+        </div>
+        <div>
+          <Icon name="leaf" />
+          <h3>Naturally considered</h3>
+          <p>Jute at the heart of simple, practical design.</p>
+        </div>
+        <div>
+          <Icon name="globe" />
+          <h3>Rooted in Bangladesh</h3>
+          <p>Local inspiration, made to be part of your everyday.</p>
+        </div>
+      </section>
+      <section id="custom-orders" className="custom-section container">
+        <div>
+          <p className="eyebrow">Custom & bulk</p>
+          <h2>
+            Your idea.
+            <br />A natural beginning.
+          </h2>
+        </div>
+        <div>
+          <p>
+            Thoughtful gifts, a bag with your brand on it, or something made for a special occasion.
+            Let’s make it yours.
+          </p>
+          <a className="button button-outline" href="#contact">
+            Get in touch <Icon name="arrow" />
+          </a>
+          <span className="custom-note">Custom order enquiries open at launch.</span>
+        </div>
+      </section>
+    </main>
+  );
+}
