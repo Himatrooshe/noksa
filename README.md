@@ -1,6 +1,6 @@
 # Noksa
 
-A Next.js App Router storefront for Noksa’s handmade jute collection. The initial design follows the supplied reference, with cream, forest green, red accents, and serif headings. Branding and product illustrations are temporary.
+A Next.js App Router storefront for Noksa’s handmade jute collection. The initial design follows the supplied reference, with cream, forest green, red accents, serif headings, and the supplied Noksa logo and hero backdrop. Product illustrations are temporary.
 
 ## Local development
 
@@ -27,7 +27,7 @@ This keeps `npm run build` from replacing chunks used by a running development s
 - `src/app/`: home, shop, product detail, and not-found routes; global styles and layout.
 - `src/components/`: navigation, footer, product grid, illustrations, icons, and shopping bag.
 - `src/lib/products.ts`: typed sample catalog and price formatting; the future backend integration point.
-- `public/`: destination for final logos, backdrop, and product photography.
+- `public/`: Noksa logo and hero backdrop assets, plus the destination for future product photography.
 
 ## Current functionality
 

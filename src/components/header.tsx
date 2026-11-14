@@ -11,12 +11,14 @@ export function Header() {
   const count = items.reduce((sum, item) => sum + item.quantity, 0);
   return (
     <header className="site-header">
-      <div className="top-border" aria-hidden="true" />
+      <div className="top-border" aria-hidden="true">
+        {Array.from({ length: 32 }, (_, index) => (
+          <img key={index} src="/noksa-border-pattern.svg" alt="" />
+        ))}
+      </div>
       <div className="header-inner">
         <Link href="/" className="brand" aria-label="Noksa home">
-          <span className="brand-symbol" aria-hidden="true">
-            ন
-          </span>
+          <img className="brand-symbol" src="/noksa-logo.svg" alt="" width="44" height="44" />
           <span>NOKSA</span>
         </Link>
         <nav

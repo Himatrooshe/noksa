@@ -5,6 +5,13 @@ export default function Home() {
   return (
     <main id="main-content">
       <section className="hero">
+        <img
+          className="hero-backdrop"
+          src="/Background Image p1-cropped.svg"
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+        />
         <div className="container hero-inner">
           <div className="hero-copy">
             <p className="hero-eyebrow">Handmade Jute Products</p>
@@ -35,37 +42,23 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="hero-art" aria-label="Noksa brand placeholder">
-            <div className="brand-seal">
-              <span className="seal-top">Rooted in nature</span>
-              <span className="seal-bangla" lang="bn">
-                নকশা
-              </span>
-              <span className="seal-name">NOKSA</span>
-              <span className="seal-bottom">The art of sustainable living</span>
-            </div>
-            <p>
-              Simple materials.
-              <br />
-              Beautiful possibilities.
-            </p>
+          <div className="hero-art">
+            <img
+              className="hero-logo"
+              src="/noksa-logo.svg"
+              alt="Noksa — The art of sustainable living"
+              width="355"
+              height="354"
+            />
           </div>
         </div>
       </section>
-      <div className="brand-strip">
+      <div className="brand-strip" aria-label="Noksa highlights">
         <span>Handmade Jute Products</span>
-        <span className="strip-flower" aria-hidden="true">
-          ✳
-        </span>
         <span>Handmade in Bangladesh</span>
-        <span className="strip-flower" aria-hidden="true">
-          ✳
-        </span>
-        <span>Natural by nature</span>
-        <span className="strip-flower" aria-hidden="true">
-          ✳
-        </span>
-        <span>Made for everyday living</span>
+        <span>available on Amazon</span>
+        <span>available on Walmart</span>
+        <span>Noksa</span>
       </div>
       <section className="collection section-space container" aria-labelledby="collection-title">
         <div className="section-heading">

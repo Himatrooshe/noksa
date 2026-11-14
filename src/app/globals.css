@@ -160,21 +160,29 @@ svg {
   top: 20px;
 }
 .site-header {
+  position: relative;
+  z-index: 10;
   background: var(--cream);
 }
 .top-border {
-  height: 13px;
-  background: repeating-linear-gradient(
-    115deg,
-    transparent 0 12px,
-    #aabfaf 12px 16px,
-    transparent 16px 25px
-  );
-  opacity: 0.65;
+  height: 48px;
+  background-color: var(--cream);
+  display: flex;
+  overflow: hidden;
+}
+.top-border img {
+  display: block;
+  width: 160px;
+  height: 48px;
+  flex: 0 0 160px;
+  margin-right: -16px;
+}
+.top-border img:first-child {
+  margin-left: -8px;
 }
 .header-inner {
   max-width: 1420px;
-  min-height: 105px;
+  min-height: 96px;
   width: calc(100% - 80px);
   margin: auto;
   display: flex;
@@ -190,16 +198,9 @@ svg {
   letter-spacing: 0.35em;
 }
 .brand-symbol {
-  display: grid;
-  place-items: center;
-  font-size: 31px;
-  letter-spacing: 0;
-  color: var(--green);
-  border: 2px solid var(--green);
-  outline: 1px solid var(--green);
-  outline-offset: 4px;
-  width: 47px;
-  height: 47px;
+  display: block;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
 }
 .main-nav {
@@ -242,23 +243,34 @@ svg {
 .hero {
   position: relative;
   overflow: hidden;
-  background: #f9faf5;
+  background: #f6f6f0;
+}
+.hero-backdrop {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  object-fit: cover;
+  object-position: center bottom;
+  pointer-events: none;
 }
 .hero-inner {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  min-height: 690px;
+  min-height: clamp(500px, calc(100svh - 226px), 620px);
   align-items: center;
   gap: 80px;
-  padding-block: 45px 46px;
+  padding-block: 30px;
 }
 .hero-eyebrow {
   font-family: var(--serif);
-  font-size: 22px;
+  font-size: 18px;
   margin-bottom: 5px;
 }
 .hero h1 {
-  font-size: clamp(66px, 6.9vw, 104px);
+  font-size: clamp(58px, 5.4vw, 84px);
   letter-spacing: -0.045em;
   line-height: 1.03;
 }
@@ -267,15 +279,15 @@ svg {
 }
 .hero-description {
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1.3;
   max-width: 490px;
-  margin-top: 20px;
+  margin-top: 15px;
 }
 .hero-button {
-  margin-top: 29px;
-  min-width: 205px;
-  min-height: 58px;
+  margin-top: 22px;
+  min-width: 190px;
+  min-height: 52px;
   text-transform: uppercase;
   font-size: 14px;
 }
@@ -284,8 +296,8 @@ svg {
   display: flex;
   gap: 35px;
   justify-content: space-between;
-  margin-top: 38px;
-  padding-top: 19px;
+  margin-top: 26px;
+  padding-top: 16px;
   max-width: 475px;
 }
 .hero-values div {
@@ -301,70 +313,30 @@ svg {
 .hero-art {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: column;
   gap: 32px;
   align-self: stretch;
   position: relative;
+  padding-top: 42px;
 }
-.hero-art > p {
-  font-family: var(--serif);
-  font-size: 19px;
-  line-height: 1.5;
-  text-align: center;
-  color: #75826d;
-}
-.brand-seal {
-  width: min(100%, 340px);
-  aspect-ratio: 1;
-  border: 2px solid #91a089;
-  outline: 1px solid #91a089;
-  outline-offset: 10px;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--green);
-  position: relative;
-}
-.seal-top {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  margin-bottom: 15px;
-}
-.seal-bangla {
-  font-family: var(--serif);
-  font-size: 78px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--red);
-}
-.seal-name {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--red);
-  letter-spacing: -0.04em;
-}
-.seal-bottom {
-  margin-top: 19px;
-  font-size: 9px;
-  letter-spacing: 0.04em;
+.hero-logo {
+  display: block;
+  width: min(100%, 290px);
+  height: auto;
 }
 .brand-strip {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(max-content, 1fr));
   align-items: center;
-  justify-content: space-around;
-  gap: 24px;
-  padding: 28px 40px;
+  gap: 32px;
+  min-height: 82px;
+  padding: 18px clamp(40px, 5vw, 90px);
   background: var(--cream);
   font-family: var(--serif);
-  font-size: 19px;
+  font-size: 17px;
+  text-align: center;
   border-block: 1px solid #e9e7dd;
-}
-.strip-flower {
-  color: #94a28b;
-  font-size: 20px;
 }
 .section-heading {
   display: flex;
@@ -925,17 +897,6 @@ svg {
 .not-found .button {
   margin-top: 20px;
 }
-@media (min-width: 1600px) {
-  .hero-inner {
-    min-height: 770px;
-  }
-  .hero h1 {
-    font-size: 112px;
-  }
-  .hero-art {
-    padding-bottom: 50px;
-  }
-}
 @media (max-width: 1100px) {
   .container {
     width: calc(100% - 72px);
@@ -949,10 +910,10 @@ svg {
   }
   .hero-inner {
     gap: 35px;
-    min-height: 630px;
+    min-height: clamp(500px, calc(100svh - 226px), 600px);
   }
   .hero h1 {
-    font-size: 80px;
+    font-size: 72px;
   }
   .hero-description {
     font-size: 21px;
@@ -963,21 +924,16 @@ svg {
   .hero-values div {
     font-size: 14px;
   }
-  .brand-seal {
-    width: 270px;
+  .hero-logo {
+    width: 250px;
   }
-  .seal-bangla {
-    font-size: 64px;
-  }
-  .seal-name {
-    font-size: 30px;
-  }
-  .seal-bottom {
-    font-size: 8px;
+  .hero-art {
+    padding-top: 36px;
   }
   .brand-strip {
     font-size: 15px;
-    padding-inline: 25px;
+    gap: 20px;
+    padding-inline: 32px;
   }
   .product-art {
     height: 235px;
@@ -1027,7 +983,6 @@ svg {
   .brand-symbol {
     width: 36px;
     height: 36px;
-    font-size: 25px;
   }
   .header-actions {
     margin-left: auto;
@@ -1042,7 +997,7 @@ svg {
   .main-nav {
     display: none;
     position: absolute;
-    top: 95px;
+    top: 100%;
     left: 0;
     right: 0;
     z-index: 5;
@@ -1050,6 +1005,18 @@ svg {
     border-bottom: 1px solid var(--line);
     padding: 15px 25px 25px;
     margin: 0;
+  }
+  .top-border {
+    height: 30px;
+  }
+  .top-border img {
+    width: 100px;
+    height: 30px;
+    flex-basis: 100px;
+    margin-right: -10px;
+  }
+  .top-border img:first-child {
+    margin-left: -5px;
   }
   .main-nav.nav-open {
     display: flex;
@@ -1091,35 +1058,21 @@ svg {
   .hero-values span {
     font-size: 9px;
   }
-  .brand-seal {
-    width: 190px;
-    outline-offset: 6px;
-  }
-  .seal-bangla {
-    font-size: 46px;
-  }
-  .seal-name {
-    font-size: 24px;
-  }
-  .seal-top {
-    font-size: 8px;
-    margin-bottom: 8px;
-    letter-spacing: 0.06em;
-  }
-  .seal-bottom {
-    font-size: 6px;
-    margin-top: 10px;
-  }
-  .hero-art > p {
-    font-size: 15px;
+  .hero-logo {
+    width: 195px;
   }
   .brand-strip {
-    padding: 21px 20px;
-    flex-wrap: wrap;
-    gap: 12px 22px;
-    font-size: 15px;
+    grid-template-columns: repeat(5, max-content);
+    justify-content: start;
+    gap: 34px;
+    min-height: 76px;
+    padding: 20px;
+    overflow-x: auto;
+    font-size: 14px;
+    text-align: left;
+    scrollbar-width: none;
   }
-  .brand-strip span:nth-child(n + 4) {
+  .brand-strip::-webkit-scrollbar {
     display: none;
   }
   .section-heading {
@@ -1236,7 +1189,7 @@ svg {
     gap: 0;
   }
   .hero h1 {
-    font-size: 74px;
+    font-size: 58px;
     line-height: 1.02;
     letter-spacing: -0.045em;
   }
@@ -1267,12 +1220,7 @@ svg {
     margin-top: 23px;
   }
   .brand-strip {
-    justify-content: center;
     font-size: 13px;
-    gap: 15px;
-  }
-  .strip-flower {
-    font-size: 15px;
   }
   .product-art {
     height: 210px;
