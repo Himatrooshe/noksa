@@ -1,9 +1,22 @@
 "use client";
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { products, formatPrice } from "@/lib/products";
+import {
+  formatPrice,
+  hasRealVariants,
+  isVariantAvailable,
+  type Product,
+  type ProductVariant,
+} from "@/lib/products";
 import { Icon } from "./icons";
+/** A bag line, keyed by variant id. */
 type Item = { id: string; quantity: number };
+const STORAGE_KEY = "noksa-bag-v2";
+const MAX_QUANTITY = 20;
+export type CartProduct = Pick<
+  Product,
+  "id" | "slug" | "name" | "trackInventory" | "continueSelling" | "options"
+> & { variants: Pick<ProductVariant, "id" | "title" | "price" | "stock">[] };
 const CartContext = createContext<{
   items: Item[];
   add: (id: string) => void;
@@ -14,13 +27,34 @@ export function useCart() {
   if (!context) throw new Error("Cart requires CartProvider");
   return context;
 }
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({
+  products,
+  children,
+}: {
+  products: CartProduct[];
+  children: ReactNode;
+}) {
   const [items, setItems] = useState<Item[]>([]);
   const [ready, setReady] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
+  const lookup = useMemo(() => {
+    const map = new Map<string, { product: CartProduct; variant: CartProduct["variants"][number] }>();
+    for (const product of products) {
+      for (const variant of product.variants) map.set(variant.id, { product, variant });
+    }
+    return map;
+  }, [products]);
+  /** Most you can put in the bag: stock for tracked items, else the cap. */
+  function maxFor(id: string): number {
+    const entry = lookup.get(id);
+    if (!entry) return 0;
+    const { product, variant } = entry;
+    if (!product.trackInventory || product.continueSelling) return MAX_QUANTITY;
+    return Math.max(0, Math.min(MAX_QUANTITY, variant.stock));
+  }
   useEffect(() => {
     try {
-      const saved: unknown = JSON.parse(localStorage.getItem("noksa-bag") || "[]");
+      const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
       if (Array.isArray(saved)) {
         const seen = new Set<string>();
         setItems(
@@ -29,10 +63,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
               !item ||
               typeof item.id !== "string" ||
               seen.has(item.id) ||
-              !products.some((p) => p.id === item.id) ||
+              !lookup.has(item.id) ||
               !Number.isInteger(item.quantity) ||
               item.quantity < 1 ||
-              item.quantity > 20
+              item.quantity > maxFor(item.id)
             )
               return false;
             seen.add(item.id);
@@ -44,11 +78,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       /* A fresh bag remains usable when browser storage is unavailable. */
     }
     setReady(true);
+    // Runs once on mount; the catalog is fixed for the life of the page.
   }, []);
   useEffect(() => {
     if (ready) {
       try {
-        localStorage.setItem("noksa-bag", JSON.stringify(items));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
       } catch {
         /* Storage is optional. */
       }
@@ -58,20 +93,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((current) =>
       quantity < 1
         ? current.filter((i) => i.id !== id)
-        : current.map((i) => (i.id === id ? { ...i, quantity: Math.min(20, quantity) } : i)),
+        : current.map((i) => (i.id === id ? { ...i, quantity: Math.min(maxFor(id), quantity) } : i)),
     );
   }
   function add(id: string) {
-    if (!products.some((p) => p.id === id)) return;
+    const entry = lookup.get(id);
+    if (!entry || !isVariantAvailable(entry.product, entry.variant)) return;
     setItems((current) =>
       current.some((i) => i.id === id)
-        ? current.map((i) => (i.id === id ? { ...i, quantity: Math.min(i.quantity + 1, 20) } : i))
+        ? current.map((i) => (i.id === id ? { ...i, quantity: Math.min(i.quantity + 1, maxFor(id)) } : i))
         : [...current, { id, quantity: 1 }],
     );
     dialog.current?.showModal();
   }
   const total = items.reduce(
-    (sum, item) => sum + products.find((p) => p.id === item.id)!.price * item.quantity,
+    (sum, item) => sum + (lookup.get(item.id)?.variant.price ?? 0) * item.quantity,
     0,
   );
   return (
@@ -108,14 +144,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
           <>
             <ul className="bag-items">
               {items.map((item) => {
-                const product = products.find((p) => p.id === item.id)!;
+                const entry = lookup.get(item.id);
+                if (!entry) return null;
+                const { product, variant } = entry;
                 return (
                   <li key={item.id}>
                     <div className="bag-item-top">
-                      <Link href={`/shop/${item.id}`} onClick={() => dialog.current?.close()}>
+                      <Link href={`/shop/${product.slug}`} onClick={() => dialog.current?.close()}>
                         {product.name}
+                        {hasRealVariants(product) && (
+                          <span className="bag-variant"> — {variant.title}</span>
+                        )}
                       </Link>
-                      <strong>{formatPrice(product.price * item.quantity)}</strong>
+                      <strong>{formatPrice(variant.price * item.quantity)}</strong>
                     </div>
                     <div className="bag-item-bottom">
                       <div className="quantity">
@@ -127,7 +168,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                         </button>
                         <span aria-label="Quantity">{item.quantity}</span>
                         <button
-                          disabled={item.quantity >= 20}
+                          disabled={item.quantity >= maxFor(item.id)}
                           aria-label={`Increase ${product.name} quantity`}
                           onClick={() => update(item.id, item.quantity + 1)}
                         >
@@ -159,8 +200,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     </CartContext.Provider>
   );
 }
-export function AddToBag({ id }: { id: string }) {
+export function AddToBag({ id, disabled = false }: { id: string; disabled?: boolean }) {
   const { add } = useCart();
+  if (disabled) {
+    return (
+      <button className="button" disabled>
+        Sold out
+      </button>
+    );
+  }
   return (
     <button className="button" onClick={() => add(id)}>
       Add to bag <Icon name="bag" />

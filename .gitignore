@@ -6,3 +6,15 @@ out/
 !.env.example
 *.tsbuildinfo
 .DS_Store
+
+# Raw database snapshots stay local. Only encrypted backups may be committed.
+backups/*
+!backups/encrypted/
+backups/encrypted/*
+!backups/encrypted/latest.json.enc
+
+# Downloaded cloud credentials (e.g. Google service account keys). The
+# values belong in .env.local / GitHub secrets, never in the repo.
+*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
+*service-account*.json
+*credentials*.json

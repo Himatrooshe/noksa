@@ -33,13 +33,13 @@ export function Header() {
           >
             Shop
           </Link>
-          <Link href="/#our-story" onClick={() => setMenuOpen(false)}>
+          <Link href="/about" onClick={() => setMenuOpen(false)}>
             Our Story
           </Link>
           <Link href="/#custom-orders" onClick={() => setMenuOpen(false)}>
             Custom & Bulk
           </Link>
-          <Link href="/#contact" onClick={() => setMenuOpen(false)}>
+          <Link href="/contact" onClick={() => setMenuOpen(false)}>
             Contact
           </Link>
         </nav>

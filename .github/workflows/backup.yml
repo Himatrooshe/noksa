@@ -1,0 +1,82 @@
+name: Database backup
+
+on:
+  schedule:
+    # 18:00 UTC = midnight in Bangladesh. GitHub may delay scheduled runs.
+    - cron: "0 18 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SHEETS_CONFIGURED: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL != '' && secrets.GOOGLE_PRIVATE_KEY != '' && secrets.GOOGLE_SHEET_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check required backup configuration
+        run: |
+          node --input-type=module -e '
+            if (!process.env.DATABASE_URL) throw new Error("Missing DATABASE_URL secret");
+            if (!/^[a-f0-9]{64}$/i.test(process.env.BACKUP_ENCRYPTION_KEY ?? "")) {
+              throw new Error("BACKUP_ENCRYPTION_KEY must be a 64-character hexadecimal secret");
+            }
+          '
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+
+      - name: Dump database tables locally
+        run: npm run backup:db
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Encrypt the restorable snapshot
+        run: npm run backup:encrypt
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+
+      - name: Preserve an encrypted recovery artifact
+        # The encrypted artifact below survives even if branch rules block a push.
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-database-backup-${{ github.run_id }}
+          path: backups/encrypted/latest.json.enc
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Commit encrypted snapshot history
+        run: |
+          git config user.name "noksa-backup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add backups/encrypted/latest.json.enc
+          git diff --cached --quiet || git commit -m "Automated encrypted database backup"
+          git push
+
+      # Preserve the encrypted backup even when Google Sheets is unavailable.
+      - name: Mirror into Google Sheets
+        if: env.SHEETS_CONFIGURED == 'true'
+        run: npm run backup:sheets
+        env:
+          GOOGLE_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
+          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+
+      - name: Report disabled Sheets mirror
+        if: env.SHEETS_CONFIGURED != 'true'
+        run: echo "Sheets mirror skipped. Configure all three GOOGLE_* repository secrets to enable it."

@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { Icon } from "@/components/icons";
 import { ProductGrid } from "@/components/product-grid";
-export default function Home() {
+import { getProducts } from "@/lib/products-server";
+import { getPageMetadata } from "@/lib/site-url";
+export const dynamic = "force-dynamic";
+export async function generateMetadata() {
+  return getPageMetadata("/");
+}
+export default async function Home() {
+  const products = await getProducts({ status: "storefront" });
   return (
     <main id="main-content">
       <section className="hero">
@@ -70,7 +77,7 @@ export default function Home() {
             Explore the collection <Icon name="arrow" />
           </Link>
         </div>
-        <ProductGrid />
+        <ProductGrid products={products} />
       </section>
       <section id="our-story" className="story-section">
         <div className="container story-layout">
@@ -131,9 +138,9 @@ export default function Home() {
             Thoughtful gifts, a bag with your brand on it, or something made for a special occasion.
             Let’s make it yours.
           </p>
-          <a className="button button-outline" href="#contact">
+          <Link className="button button-outline" href="/contact#custom-bulk">
             Get in touch <Icon name="arrow" />
-          </a>
+          </Link>
           <span className="custom-note">Custom order enquiries open at launch.</span>
         </div>
       </section>

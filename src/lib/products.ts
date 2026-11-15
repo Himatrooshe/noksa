@@ -1,66 +1,85 @@
-export const categories = [
-  "All products",
-  "Everyday bags",
-  "Home & living",
-  "Accessories",
-] as const;
-export type Category = (typeof categories)[number];
-export type Product = {
+// Client-safe types + helpers shared by server and client components.
+// Database access lives in src/lib/products-server.ts and
+// src/lib/orders-server.ts, both `import "server-only"`.
+
+export const ALL_PRODUCTS = "All products" as const;
+export const DEFAULT_VARIANT_TITLE = "Default Title";
+
+export type ProductStatus = "active" | "draft" | "archived";
+export type ProductShape = "tote" | "basket" | "pouch" | "round";
+
+export type ProductMedia = { id: string; url: string; alt: string };
+export type ProductOption = { name: string; values: string[] };
+export type ProductVariant = {
   id: string;
-  name: string;
-  category: Exclude<Category, "All products">;
+  title: string;
+  options: string[];
   price: number;
-  color: string;
-  shape: "tote" | "basket" | "pouch" | "round";
+  compareAtPrice: number | null;
+  sku: string | null;
+  stock: number;
+};
+export type CollectionRef = { id: string; handle: string; title: string };
+export type Collection = CollectionRef & {
   description: string;
-  dimensions: string;
+  imageUrl: string | null;
+  productCount: number;
 };
 
-// Sample catalog. Replace this module with a server-side repository when the admin is built.
-export const products: Product[] = [
-  {
-    id: "everyday-jute-tote",
-    name: "The everyday tote",
-    category: "Everyday bags",
-    price: 850,
-    color: "#bba078",
-    shape: "tote",
-    description:
-      "A simple, roomy companion for market mornings and everything that follows. Natural jute, comfortable handles, and space for your daily essentials.",
-    dimensions: "38 × 34 × 12 cm",
-  },
-  {
-    id: "woven-storage-basket",
-    name: "The woven basket",
-    category: "Home & living",
-    price: 1250,
-    color: "#c4a478",
-    shape: "basket",
-    description:
-      "A little order, a lot of warmth. A woven basket for the blankets, plants, and small things that make a house your home.",
-    dimensions: "28 × 28 × 26 cm",
-  },
-  {
-    id: "little-jute-pouch",
-    name: "The little pouch",
-    category: "Accessories",
-    price: 450,
-    color: "#b8aa8d",
-    shape: "pouch",
-    description:
-      "Keep the little things together. A compact jute pouch for your keys, everyday essentials, or a thoughtfully chosen gift.",
-    dimensions: "22 × 16 × 5 cm",
-  },
-  {
-    id: "weekend-jute-bag",
-    name: "The weekend bag",
-    category: "Everyday bags",
-    price: 1450,
-    color: "#ac8b66",
-    shape: "round",
-    description:
-      "Made for slower days and spontaneous plans. A relaxed, rounded carryall with a generous interior and natural woven texture.",
-    dimensions: "40 × 36 × 14 cm",
-  },
-];
-export const formatPrice = (price: number) => `৳${price.toLocaleString("en-BD")}`;
+export type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  status: ProductStatus;
+  /** Sanitized HTML. */
+  description: string;
+  dimensions: string;
+  color: string;
+  shape: ProductShape;
+  trackInventory: boolean;
+  continueSelling: boolean;
+  media: ProductMedia[];
+  options: ProductOption[];
+  variants: ProductVariant[];
+  collections: CollectionRef[];
+  /** Lowest variant price, and that variant's compare-at price. */
+  price: number;
+  compareAtPrice: number | null;
+  totalStock: number;
+};
+
+// Monetary values are stored as whole US dollars throughout the catalog
+// and orders. Do not divide by 100: the database does not store cents.
+const usdFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+export const formatPrice = (price: number) => usdFormatter.format(price);
+
+export function variantTitle(options: (string | null | undefined)[]): string {
+  const parts = options.filter((o): o is string => Boolean(o));
+  return parts.length ? parts.join(" / ") : DEFAULT_VARIANT_TITLE;
+}
+
+export function isVariantAvailable(
+  product: Pick<Product, "trackInventory" | "continueSelling">,
+  variant: Pick<ProductVariant, "stock">,
+): boolean {
+  return !product.trackInventory || product.continueSelling || variant.stock > 0;
+}
+
+export function isProductAvailable(product: Product): boolean {
+  return product.variants.some((v) => isVariantAvailable(product, v));
+}
+
+export function hasRealVariants(product: Pick<Product, "options">): boolean {
+  return product.options.length > 0;
+}
+
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

@@ -2,11 +2,15 @@
 
 ## Project Structure & Module Organization
 
-This repository is currently an empty project scaffold. No application code, tests, assets, or package manifests exist yet. When introducing the initial implementation, organize files by responsibility and document the chosen structure here. Prefer `src/` for application code, `tests/` for standalone tests, `assets/` for static resources, and `docs/` for supporting documentation when those directories are relevant. Avoid creating empty directories solely to match this layout.
+The Next.js App Router app lives in `src/app/`, with independent storefront and dashboard root layouts. Shared UI lives in `src/components/`; server data access and client-safe helpers live in `src/lib/`. Static assets live in `public/`, database migrations in `db/migrations/`, operational scripts in `scripts/`, and setup notes in `docs/`. Standalone regression tests live in `tests/`. Avoid creating empty directories solely to match this layout.
 
 ## Build, Test, and Development Commands
 
-No build system, dependency manager, or development commands are configured. Do not assume commands such as `npm test` or `make build` work. When selecting a toolchain, provide reproducible commands for installing dependencies, running locally, building, linting, and testing. Record those exact commands in this guide and the project README, and commit the appropriate dependency lockfile.
+Use Node.js 22 or newer and npm with the committed `package-lock.json`. Run `npm ci` to install, `npm run dev` for local development, `npm run build` for a production build, `npm start` to serve it, `npm run typecheck` for TypeScript validation, and `npm test` for deterministic Node test runner checks. No standalone lint or formatter command is configured. Development output uses `.next-dev/<port>/` to isolate concurrent servers; production output uses `.next/`.
+
+Production release builds use `npm run build:production` (migrations, then build). `npm run db:check-catalog` validates catalog SQL in isolated PostgreSQL schemas and rolls back every test; it requires database access. Deployment instructions live in `docs/PRODUCTION_DEPLOYMENT.md`.
+
+Backup commands: `npm run backup:check` validates Sheets access without changes; `npm run backup` creates local JSON, an encrypted archive, and the Sheets mirror. `npm run backup:db`, `npm run backup:encrypt`, `npm run backup:sheets`, and `npm run backup:decrypt` run each stage independently. Raw backup JSON is gitignored; only encrypted snapshots may be committed. See `docs/ADMIN_SETUP.md` for secrets, scheduling, and recovery.
 
 ## Coding Style & Naming Conventions
 
@@ -14,7 +18,7 @@ Follow the idioms of the language and framework introduced by the project. Confi
 
 ## Testing Guidelines
 
-No test framework or coverage threshold is established. Add tests alongside new behavior using the selected framework's standard naming convention, and document how to run them. Prioritize observable behavior, failure paths, and regression cases. Keep tests deterministic and independent of production credentials or services.
+Use Node's built-in test runner (`tests/*.test.cjs` and `tests/*.test.mjs`, run with `npm test`). No coverage threshold is established. Prioritize observable behavior, failure paths, and regression cases. Keep tests deterministic and independent of production credentials or services.
 
 ## Commit & Pull Request Guidelines
 
