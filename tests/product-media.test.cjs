@@ -33,6 +33,7 @@ function setup(rows, authorized = false) {
   const products = loadSource("src/lib/products.ts", {});
   const server = loadSource("src/lib/products-server.ts", {
     "server-only": {}, react: require("react"), "sanitize-html": require("sanitize-html"),
+    "next/cache": { unstable_cache: (fn) => fn, revalidateTag: () => {} },
     "@/lib/db": { sql }, "@/lib/products": products,
   });
   const { GET } = loadSource("src/app/api/product-media/[id]/route.ts", {

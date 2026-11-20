@@ -39,6 +39,13 @@ export function Header() {
           <Link href="/#custom-orders" onClick={() => setMenuOpen(false)}>
             Custom & Bulk
           </Link>
+          <Link
+            href="/blog"
+            aria-current={pathname.startsWith("/blog") ? "page" : undefined}
+            onClick={() => setMenuOpen(false)}
+          >
+            Blog
+          </Link>
           <Link href="/contact" onClick={() => setMenuOpen(false)}>
             Contact
           </Link>

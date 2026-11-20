@@ -19,12 +19,15 @@
     "backup": "npm run backup:db && npm run backup:encrypt && npm run backup:sheets"
   },
   "dependencies": {
+    "@gsap/react": "2.1.2",
     "@neondatabase/serverless": "^1.2.1",
+    "gsap": "3.15.1",
     "next": "15.5.29",
     "react": "19.2.5",
     "react-dom": "19.2.5",
     "sanitize-html": "^2.18.2",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "stripe": "23.1.0"
   },
   "devDependencies": {
     "@types/node": "26.6.6",

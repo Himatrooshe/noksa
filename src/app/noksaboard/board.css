@@ -1403,3 +1403,131 @@ textarea.board-input {
   align-items: center;
   font-weight: 400;
 }
+
+/* Videos */
+.board-video-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.board-video {
+  display: grid;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+  gap: 18px;
+  padding: 14px;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+}
+.board-video.showcased {
+  border-color: #008060;
+  box-shadow: 0 0 0 1px #008060;
+}
+.board-video video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  background: #1a1a1a;
+  object-fit: cover;
+}
+.board-video-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.board-video-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.board-video-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.board-video-upload .board-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.board-progress {
+  position: relative;
+  height: 28px;
+  border-radius: 8px;
+  background: #f1f2f3;
+  overflow: hidden;
+}
+.board-progress span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #b4e0d1;
+  transition: width 0.2s;
+}
+.board-progress em {
+  position: relative;
+  display: block;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  font-style: normal;
+}
+@media (max-width: 700px) {
+  .board-video {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Blog editor */
+.rte-long .rte-content {
+  min-height: 420px;
+  font-size: 15px;
+  line-height: 1.75;
+}
+.rte-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0;
+  border-radius: 8px;
+}
+.rte-content blockquote {
+  margin: 12px 0;
+  padding-left: 14px;
+  border-left: 3px solid #b84740;
+  font-style: italic;
+}
+.rte-content h2 {
+  font-size: 20px;
+  margin: 16px 0 6px;
+}
+.rte-content h3 {
+  font-size: 16px;
+  margin: 14px 0 6px;
+}
+.rte-content hr {
+  margin: 18px 0;
+  border: 0;
+  border-top: 1px solid #e3e3e3;
+}
+.rte-status {
+  align-self: center;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #6d7175;
+}
+.rte-toolbar button:disabled {
+  opacity: 0.4;
+}
+.rte-message {
+  margin: 8px 12px 0;
+}
+.board-post-cover {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 8px;
+}

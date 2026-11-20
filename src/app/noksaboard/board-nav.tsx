@@ -7,6 +7,8 @@ const LINKS = [
   { href: "/noksaboard/orders", label: "Orders" },
   { href: "/noksaboard/products", label: "Products" },
   { href: "/noksaboard/collections", label: "Collections" },
+  { href: "/noksaboard/videos", label: "Videos" },
+  { href: "/noksaboard/blog", label: "Blog" },
   { href: "/noksaboard/customers", label: "Customers" },
 ];
 

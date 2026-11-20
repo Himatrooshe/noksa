@@ -1,7 +1,7 @@
 import "server-only";
 import { sql } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
-import { isUuid } from "@/lib/products-server";
+import { catalogChanged, isUuid } from "@/lib/products-server";
 import {
   paymentMethodLabel,
   type CustomerDetail,
@@ -159,6 +159,8 @@ export type CreateOrderInput = {
   markPaid: boolean;
   transactionId: string | null;
   note: string;
+  /** Where the order came from; storefront checkout orders may only contain Active products. */
+  source?: "dashboard" | "checkout";
 };
 
 type VariantLookupRow = {
@@ -171,6 +173,7 @@ type VariantLookupRow = {
   price: number;
   sku: string | null;
   track_inventory: boolean;
+  product_status: string;
 };
 
 /** Returns the new order's id. Stock is decremented in the same transaction;
@@ -181,15 +184,18 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
 
   const variants = (await sql`
     select v.id as variant_id, p.id as product_id, p.name as product_name,
-           v.option1, v.option2, v.option3, v.price, v.sku, p.track_inventory
+           v.option1, v.option2, v.option3, v.price, v.sku, p.track_inventory, p.status as product_status
     from product_variants v join products p on p.id = v.product_id
     where v.id = any(${variantIds}::uuid[])
   `) as unknown as VariantLookupRow[];
   const byId = new Map(variants.map((v) => [v.variant_id, v]));
+  const fromCheckout = input.source === "checkout";
 
   const lines = input.lines.map((line) => {
     const v = byId.get(line.variantId);
-    if (!v) throw new Error("A product in this order no longer exists. Remove it and try again.");
+    if (!v || (fromCheckout && v.product_status !== "active")) {
+      throw new Error("A product in this order is no longer available. Remove it and try again.");
+    }
     const opts = [v.option1, v.option2, v.option3].filter((o): o is string => o !== null);
     return {
       ...line,
@@ -245,7 +251,7 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
           and exists (select 1 from products p where p.id = product_variants.product_id and p.track_inventory)
       `,
     ),
-    sql`insert into order_events (order_id, message) values (${orderId}, ${"Order created in the dashboard."})`,
+    sql`insert into order_events (order_id, message) values (${orderId}, ${fromCheckout ? "Order placed through online checkout. Awaiting card payment." : "Order created in the dashboard."})`,
   ];
   if (input.markPaid) {
     queries.push(sql`
@@ -260,7 +266,152 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
     if (pgCode(err) === "P0001" && err instanceof Error) throw new Error(err.message);
     throw new Error(`Couldn't create the order: ${err instanceof Error ? err.message : err}`);
   }
+  catalogChanged();
   return orderId;
+}
+
+// ---------------------------------------------------------------------------
+// Online checkout (Stripe)
+// ---------------------------------------------------------------------------
+
+export type CheckoutQuoteLine = {
+  variantId: string;
+  quantity: number;
+  name: string;
+  unitPrice: number;
+};
+
+/** Current prices for a storefront bag. Throws when an item is unavailable or out of stock. */
+export async function quoteCheckout(lines: { variantId: string; quantity: number }[]): Promise<CheckoutQuoteLine[]> {
+  const ids = lines.map((l) => l.variantId).filter(isUuid);
+  if (ids.length !== lines.length) throw new Error("Your bag has an item we couldn't read.");
+  const rows = (await sql`
+    select v.id, v.option1, v.option2, v.option3, v.price, v.stock,
+           p.name, p.status, p.track_inventory, p.continue_selling
+    from product_variants v join products p on p.id = v.product_id
+    where v.id = any(${ids}::uuid[])
+  `) as unknown as {
+    id: string; option1: string | null; option2: string | null; option3: string | null; price: number;
+    stock: number; name: string; status: string; track_inventory: boolean; continue_selling: boolean;
+  }[];
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  return lines.map((line) => {
+    const row = byId.get(line.variantId);
+    if (!row || row.status !== "active") {
+      throw new Error("An item in your bag is no longer available. Remove it and try again.");
+    }
+    if (row.track_inventory && !row.continue_selling && row.stock < line.quantity) {
+      throw new Error(
+        row.stock > 0
+          ? `Only ${row.stock} of ${row.name} ${row.stock === 1 ? "is" : "are"} left. Update your bag and try again.`
+          : `${row.name} just sold out. Remove it from your bag and try again.`,
+      );
+    }
+    const opts = [row.option1, row.option2, row.option3].filter((o): o is string => o !== null);
+    const name = opts.length && !opts.every((o) => isUuid(o)) ? `${row.name} — ${opts.join(" / ")}` : row.name;
+    return { variantId: line.variantId, quantity: line.quantity, name, unitPrice: Number(row.price) };
+  });
+}
+
+export async function attachStripeSession(orderId: string, sessionId: string): Promise<void> {
+  await sql`update orders set stripe_session_id = ${sessionId} where id = ${orderId}`;
+}
+
+/** Marks the checkout order for this Stripe session paid. Safe to call more than once. */
+export async function markCheckoutPaid(sessionId: string, paymentIntentId: string | null): Promise<void> {
+  const [order] = (await sql`
+    update orders set payment_status = 'paid', paid_at = now(), transaction_id = ${paymentIntentId}
+    where stripe_session_id = ${sessionId} and payment_status = 'pending' and status = 'open'
+    returning id, total
+  `) as unknown as { id: string; total: number }[];
+  if (order) {
+    await addEvent(order.id, `Card payment of ${formatPrice(Number(order.total))} received through Stripe.`);
+    return;
+  }
+  // Paid after the order was already cancelled (e.g. a very late payment): flag it for a person.
+  const [late] = (await sql`
+    select id from orders where stripe_session_id = ${sessionId} and status = 'cancelled' and payment_status <> 'paid'
+  `) as unknown as { id: string }[];
+  if (late) {
+    await addEvent(
+      late.id,
+      `Stripe reports a completed payment${paymentIntentId ? ` (${paymentIntentId})` : ""} for this cancelled order. Refund it in Stripe or restore the order.`,
+    );
+  }
+}
+
+/**
+ * Cancels an unpaid card-checkout order and puts its stock back, e.g. when the
+ * customer leaves the Stripe page or the session expires. It is one atomic
+ * statement, so a webhook and a return visit racing each other restock only
+ * once, and paid orders are never touched.
+ */
+export async function cancelUnpaidCheckout(where: { sessionId?: string; orderId?: string }): Promise<void> {
+  const orderId = where.orderId && isUuid(where.orderId) ? where.orderId : null;
+  const sessionId = where.sessionId ?? null;
+  if (!orderId && !sessionId) return;
+  const [result] = (await sql`
+    with cancelled as (
+      update orders set status = 'cancelled', cancelled_at = now(), payment_status = 'voided'
+      where (${orderId}::uuid is null or id = ${orderId}::uuid)
+        and (${sessionId}::text is null or stripe_session_id = ${sessionId})
+        and status = 'open' and payment_status = 'pending' and payment_method = 'card'
+      returning id
+    ), restocked as (
+      update product_variants v set stock = v.stock + i.quantity
+      from order_items i, cancelled c
+      where i.order_id = c.id and i.variant_id = v.id
+        and exists (select 1 from products p where p.id = v.product_id and p.track_inventory)
+      returning v.id
+    ), logged as (
+      insert into order_events (order_id, message)
+      select id, 'Checkout was not completed. Order cancelled and items restocked.' from cancelled
+      returning order_id
+    )
+    select (select count(*) from cancelled)::int as cancelled
+  `) as unknown as { cancelled: number }[];
+  if (result?.cancelled) catalogChanged();
+}
+
+export type CheckoutConfirmation = {
+  orderNumber: number;
+  paymentStatus: PaymentStatus;
+  status: OrderStatus;
+  email: string | null;
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  lines: { name: string; quantity: number; unitPrice: number }[];
+};
+
+/** What the order-confirmation page shows. Only checkout orders are exposed. */
+export async function getCheckoutConfirmation(orderId: string): Promise<CheckoutConfirmation | null> {
+  if (!isUuid(orderId)) return null;
+  const [order] = (await sql`
+    select order_number, payment_status, status, customer_email, subtotal, shipping_fee, total
+    from orders where id = ${orderId} and payment_method = 'card' and stripe_session_id is not null
+  `) as unknown as {
+    order_number: number; payment_status: PaymentStatus; status: OrderStatus; customer_email: string | null;
+    subtotal: number; shipping_fee: number; total: number;
+  }[];
+  if (!order) return null;
+  const items = (await sql`
+    select product_name, variant_title, quantity, unit_price from order_items where order_id = ${orderId}
+  `) as unknown as { product_name: string; variant_title: string | null; quantity: number; unit_price: number }[];
+  return {
+    orderNumber: order.order_number,
+    paymentStatus: order.payment_status,
+    status: order.status,
+    email: order.customer_email,
+    subtotal: Number(order.subtotal),
+    shippingFee: Number(order.shipping_fee),
+    total: Number(order.total),
+    lines: items.map((i) => ({
+      name: i.variant_title && !isUuid(i.variant_title) ? `${i.product_name} — ${i.variant_title}` : i.product_name,
+      quantity: i.quantity,
+      unitPrice: Number(i.unit_price),
+    })),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -342,6 +493,7 @@ export async function cancelOrder(id: string, restock: boolean): Promise<void> {
     values (${id}, ${restock ? "Order cancelled. Items restocked." : "Order cancelled."})
   `);
   await sql.transaction(queries);
+  if (restock) catalogChanged();
 }
 
 export async function setOrderArchived(id: string, archived: boolean): Promise<void> {

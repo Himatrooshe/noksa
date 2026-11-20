@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import sanitizeHtml from "sanitize-html";
 import { sql } from "@/lib/db";
@@ -69,8 +70,30 @@ function likePattern(q: string): string {
 
 export async function getProducts(filter: ProductFilter = {}): Promise<Product[]> {
   const q = filter.q?.trim() ? likePattern(filter.q.trim()) : null;
+  // The full storefront catalog is read on every storefront page (layout + shop),
+  // so it is served from the shared cache. Filtered and dashboard reads stay live.
+  if (filter.status === "storefront" && !q && !filter.id && !filter.slug) {
+    return getStorefrontCatalog();
+  }
   return readProducts(filter.status ?? null, q, filter.id ?? null, filter.slug ?? null);
 }
+
+/**
+ * Every write that changes what the storefront shows (products, variants,
+ * stock, collections) must call this so cached storefront reads refresh at once.
+ * The time-based expiry only covers edits made outside the app, e.g. raw SQL.
+ */
+export function catalogChanged(): void {
+  revalidateTag(CATALOG_TAG);
+}
+
+const CATALOG_TAG = "catalog";
+
+const getStorefrontCatalog = unstable_cache(
+  () => readProducts("storefront", null, null, null),
+  ["storefront-catalog"],
+  { revalidate: 300, tags: [CATALOG_TAG] },
+);
 
 // Primitive arguments let React reuse reads from the layout, page and metadata
 // within one render, even when callers construct separate filter objects.
@@ -167,8 +190,8 @@ const readProducts = cache(async (
 
 /** Storefront lookup: active products only. */
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const [product] = await getProducts({ slug, status: "storefront" });
-  return product ?? null;
+  const products = await getStorefrontCatalog();
+  return products.find((product) => product.slug === slug) ?? null;
 }
 
 /** Only public URLs belong in the sitemap; no variants or media are needed. */
@@ -342,6 +365,7 @@ export async function saveProduct(input: ProductInput, existingId?: string): Pro
   } catch (err) {
     throw friendlyError(err, input);
   }
+  catalogChanged();
   return productId;
 }
 
@@ -349,12 +373,14 @@ export async function setProductsStatus(ids: string[], status: ProductStatus): P
   const valid = ids.filter(isUuid);
   if (valid.length === 0) return;
   await sql`update products set status = ${status} where id = any(${valid}::uuid[])`;
+  catalogChanged();
 }
 
 export async function deleteProducts(ids: string[]): Promise<void> {
   const valid = ids.filter(isUuid);
   if (valid.length === 0) return;
   await sql`delete from products where id = any(${valid}::uuid[])`;
+  catalogChanged();
 }
 
 // ---------------------------------------------------------------------------
@@ -382,8 +408,42 @@ function mapCollection(r: CollectionRow): Collection {
 }
 
 /** `storefront` counts only active products. */
+/** Lightweight read for the home page's category cards: one photo per category. */
+async function readCategoryCovers(
+  productSlugs: string[],
+  collectionHandles: string[],
+): Promise<Record<string, string>> {
+  const [products, collections] = (await Promise.all([
+    sql`select p.slug as key,
+          (select case when m.url like 'data:image/%'
+                  then '/api/product-media/' || m.id::text else m.url end
+           from product_media m where m.product_id = p.id order by m.position limit 1) as url
+        from products p
+        where p.status = 'active' and p.slug = any(${productSlugs}::text[])`,
+    sql`select handle as key, image_url as url from collections
+        where handle = any(${collectionHandles}::text[])`,
+  ])) as unknown as [{ key: string; url: string | null }[], { key: string; url: string | null }[]];
+  const covers: Record<string, string> = {};
+  for (const row of [...products, ...collections]) if (row.url) covers[row.key] = row.url;
+  return covers;
+}
+
+// Cached like the storefront catalog; catalogChanged() clears it.
+export const getCategoryCovers = unstable_cache(readCategoryCovers, ["category-covers"], {
+  revalidate: 300,
+  tags: [CATALOG_TAG],
+});
+
 export async function getCollections(opts: { storefront?: boolean } = {}): Promise<Collection[]> {
-  const activeOnly = Boolean(opts.storefront);
+  return opts.storefront ? getStorefrontCollections() : readCollections(false);
+}
+
+const getStorefrontCollections = unstable_cache(() => readCollections(true), ["storefront-collections"], {
+  revalidate: 300,
+  tags: [CATALOG_TAG],
+});
+
+async function readCollections(activeOnly: boolean): Promise<Collection[]> {
   const rows = (await sql`
     select c.id, c.handle, c.title, c.description, c.image_url,
            count(p.id)::int as product_count
@@ -441,10 +501,12 @@ export async function saveCollection(input: CollectionInput, existingId?: string
   } catch (err) {
     throw friendlyError(err, input);
   }
+  catalogChanged();
   return id;
 }
 
 export async function deleteCollection(id: string): Promise<void> {
   if (!isUuid(id)) return;
   await sql`delete from collections where id = ${id}`;
+  catalogChanged();
 }

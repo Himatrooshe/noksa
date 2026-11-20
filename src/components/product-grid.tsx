@@ -45,12 +45,16 @@ export function ProductGrid({
   products,
   categoryNames,
   filters = false,
+  initialCategory,
 }: {
   products: Product[];
   categoryNames?: string[];
   filters?: boolean;
+  initialCategory?: string;
 }) {
-  const [category, setCategory] = useState<string>(ALL_PRODUCTS);
+  const [category, setCategory] = useState<string>(
+    initialCategory && categoryNames?.includes(initialCategory) ? initialCategory : ALL_PRODUCTS,
+  );
   const shown = products.filter(
     (product) =>
       category === ALL_PRODUCTS || product.collections.some((c) => c.title === category),

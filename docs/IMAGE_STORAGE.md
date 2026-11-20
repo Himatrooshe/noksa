@@ -16,6 +16,12 @@ The product form saves the returned HTTPS URL. Failed uploads do not add an imag
 
 The storefront requests responsive ImageKit image sizes; product grids and gallery thumbnails use smaller versions than full product photos.
 
+## Showcase videos
+
+Dashboard → Videos uploads clips for the home page's video showcase. Videos are too large to pass through the app server, so the browser uploads them directly to ImageKit's `/noksa/videos` folder. `POST /api/admin/video-upload-auth` requires an authenticated administrator and a same-origin request, and returns a 30-minute HMAC upload signature; the private key never leaves the server. This flow uses `IMAGEKIT_PUBLIC_KEY`, so set it on the host. Saving a video accepts only URLs under this account's `/noksa/videos/` folder.
+
+The `showcase_videos` table (migration `004_showcase_videos.sql`) stores titles, captions and URLs; at most one video is showcased at a time. Deleting a video removes it from the dashboard but keeps the ImageKit file.
+
 ## Existing-image migration
 
 Use Node.js 22 or newer:

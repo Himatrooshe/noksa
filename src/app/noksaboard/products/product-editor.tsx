@@ -1,4 +1,5 @@
 "use client";
+import { MAX_SAVED_IMAGE_BYTES, MAX_SOURCE_IMAGE_BYTES, resizeImage } from "../upload-image";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -25,8 +26,6 @@ const COLOR_SWATCHES = [
   { name: "Charcoal", value: "#3d3b38" },
 ];
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-const MAX_SOURCE_IMAGE_BYTES = 8 * 1024 * 1024;
-const MAX_SAVED_IMAGE_BYTES = 1_500_000;
 
 type EditorState = {
   name: string;
@@ -813,31 +812,6 @@ export function ProductEditor({
       )}
     </form>
   );
-}
-
-function resizeImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = () => {
-      const image = new Image();
-      image.onerror = reject;
-      image.onload = () => {
-        const maxEdge = 1600;
-        const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-        const context = canvas.getContext("2d");
-        if (!context) return reject(new Error("Canvas unavailable"));
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        const outputType = file.type === "image/png" && file.size < 750_000 ? "image/png" : "image/webp";
-        resolve(canvas.toDataURL(outputType, 0.82));
-      };
-      image.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 function InventoryToggles({

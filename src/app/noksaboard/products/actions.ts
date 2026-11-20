@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   deleteProducts,
@@ -149,6 +149,7 @@ function toInput(p: ProductPayload): ProductInput {
 function revalidateCatalog() {
   revalidatePath("/noksaboard", "layout");
   revalidatePath("/", "layout");
+  revalidateTag("catalog");
 }
 
 export async function saveProductAction(

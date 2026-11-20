@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac, randomUUID } from "node:crypto";
 
 export const MAX_IMAGE_BYTES = 1_500_000;
 
@@ -46,4 +46,33 @@ export async function uploadImage(bytes, { folder = "/noksa/products", determini
     throw new Error("ImageKit returned an incomplete upload result.");
   }
   return { fileId: result.fileId, url: result.url, filePath: result.filePath, hash };
+}
+
+export const VIDEO_FOLDER = "/noksa/videos";
+
+/**
+ * Short-lived credentials that let an authenticated admin's browser upload a
+ * video straight to ImageKit. Videos are too large to pass through this app's
+ * server; the private key never leaves the server, only an HMAC signature does.
+ */
+export function videoUploadAuth(now = Date.now()) {
+  const { privateKey } = imagekitConfig();
+  const publicKey = process.env.IMAGEKIT_PUBLIC_KEY;
+  if (!publicKey) throw new Error("Video uploads are not configured. Set IMAGEKIT_PUBLIC_KEY.");
+  const token = randomUUID();
+  const expire = Math.floor(now / 1000) + 30 * 60; // ImageKit allows at most one hour.
+  const signature = createHmac("sha1", privateKey).update(token + expire).digest("hex");
+  return { token, expire, signature, publicKey, folder: VIDEO_FOLDER };
+}
+
+/** Only videos uploaded to this account's ImageKit video folder may be saved. */
+export function isOwnVideoUrl(value) {
+  try {
+    const url = new URL(value);
+    const { endpoint } = imagekitConfig();
+    return url.protocol === "https:" && !url.username && !url.password && url.search === "" &&
+      `${url.origin}${url.pathname}`.startsWith(`${endpoint}${VIDEO_FOLDER}/`);
+  } catch {
+    return false;
+  }
 }

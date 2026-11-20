@@ -16,10 +16,22 @@ const MAX_QUANTITY = 20;
 export type CartProduct = Pick<
   Product,
   "id" | "slug" | "name" | "trackInventory" | "continueSelling" | "options"
-> & { variants: Pick<ProductVariant, "id" | "title" | "price" | "stock">[] };
+> & { image: string | null; variants: Pick<ProductVariant, "id" | "title" | "price" | "compareAtPrice" | "stock">[] };
+/** A bag line resolved against the catalog, for the checkout page. */
+export type CartLine = {
+  id: string;
+  quantity: number;
+  max: number;
+  product: CartProduct;
+  variant: CartProduct["variants"][number];
+};
 const CartContext = createContext<{
   items: Item[];
+  lines: CartLine[];
+  ready: boolean;
   add: (id: string) => void;
+  update: (id: string, quantity: number) => void;
+  clear: () => void;
   open: () => void;
 } | null>(null);
 export function useCart() {
@@ -110,8 +122,14 @@ export function CartProvider({
     (sum, item) => sum + (lookup.get(item.id)?.variant.price ?? 0) * item.quantity,
     0,
   );
+  const lines: CartLine[] = items.flatMap((item) => {
+    const entry = lookup.get(item.id);
+    return entry ? [{ id: item.id, quantity: item.quantity, max: maxFor(item.id), ...entry }] : [];
+  });
   return (
-    <CartContext.Provider value={{ items, add, open: () => dialog.current?.showModal() }}>
+    <CartContext.Provider
+      value={{ items, lines, ready, add, update, clear: () => setItems([]), open: () => dialog.current?.showModal() }}
+    >
       {children}
       <dialog
         ref={dialog}
@@ -187,11 +205,11 @@ export function CartProvider({
               <span>Subtotal</span>
               <strong>{formatPrice(total)}</strong>
             </div>
-            <p className="bag-note">
-              This is a sample collection. Ordering and payments will be available when the store
-              launches.
-            </p>
-            <button className="button full-width" onClick={() => dialog.current?.close()}>
+            <p className="bag-note">Shipping is calculated at checkout. Free on orders of $75 or more.</p>
+            <Link href="/checkout" className="button full-width" onClick={() => dialog.current?.close()}>
+              Checkout <Icon name="arrow" />
+            </Link>
+            <button className="text-button bag-continue" onClick={() => dialog.current?.close()}>
               Continue browsing
             </button>
           </>

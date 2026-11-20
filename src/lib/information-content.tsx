@@ -150,45 +150,62 @@ export const informationContent: Record<StorefrontPageSlug, InformationContent> 
   },
   "privacy-policy": {
     title: "Privacy policy",
-    description: "How Noksa’s current storefront handles browsing information, local shopping bag storage, and Google Tag Manager.",
-    intro: "How information is used when you browse Noksa.",
+    description: "How Noksa collects, uses, shares, and protects personal information, and the privacy choices and rights available to you.",
+    intro: "A clear explanation of how we handle your information. Noksa values your trust: this policy explains what information we may collect, why we use it, when it may be shared, and the choices and rights that may be available to you.",
     policy: true,
+    updatedLabel: "Effective date: November 17, 2026",
     sections: [
       {
-        id: "scope", title: "About this policy",
-        content: <p>This policy describes the current Noksa storefront. The site offers product browsing and a browser-saved shopping bag. It does not currently provide shopper accounts, online checkout, payment collection, or a public contact form. Our legal business identity and public privacy contact will be added before ordering launches.</p>,
+        id: "introduction", title: "1. Introduction",
+        content: <><p>At Noksa, we value your trust and respect your privacy. We believe a great shopping experience begins with confidence, transparency, and care.</p><p>This Privacy Policy explains how we collect, use, protect, and manage personal information when you visit our website, make a purchase, or communicate with us.</p><p>Our commitment is simple: your personal information deserves the same care and attention that we put into every handcrafted product.</p></>,
       },
       {
-        id: "information", title: "Information used by the site",
-        content: <><p>When you visit, the services delivering the website and its images receive technical information needed to respond to your request, such as your IP address, browser details, requested page, and request time. Their logging may include this information.</p><p>Your shopping bag stores product variant identifiers and quantities in your browser under the key <code>noksa-bag-v2</code>. The current bag feature does not submit an order, collect a payment, or ask for your name, email, or delivery address.</p></>,
+        id: "information", title: "2. Information we collect",
+        content: <><p>When you interact with Noksa, we may collect information needed to provide our services, including:</p><ul><li><strong>Personal information:</strong> name, email address, phone number, and billing or shipping address.</li><li><strong>Order information:</strong> products purchased, order history, payment status, and delivery details.</li><li><strong>Payment information:</strong> payment details handled by our payment service providers. We do not intentionally store complete payment-card details on our own systems.</li><li><strong>Technical information:</strong> IP address, browser type, device information, website activity, and cookie data.</li><li><strong>Communication information:</strong> messages, questions, feedback, and customer-support inquiries.</li></ul></>,
       },
       {
-        id: "purposes", title: "How information is used",
-        content: <p>Technical information supports delivery, operation, troubleshooting, and protection of the website. Shopping bag information lets the site remember your selections on the same browser and device.</p>,
+        id: "use", title: "3. How we use your information",
+        content: <><p>We may use information to:</p><ul><li>Process and fulfill orders and arrange shipping and delivery.</li><li>Send order confirmations and delivery updates.</li><li>Respond to questions and customer-support requests.</li><li>Improve our website, products, and shopping experience.</li><li>Help detect fraud, protect customers, and maintain website security.</li><li>Send promotional communications where permitted and, when required, with your consent.</li></ul></>,
       },
       {
-        id: "cookies-tracking", title: "Browser storage & Google Tag Manager",
-        content: <><p>The shopping bag uses local storage rather than a shopper login. You can remove saved bag data by removing items or clearing this site’s browser storage. The bag has no automatic expiration set by the site.</p><p>The storefront loads Google Tag Manager, which receives connection information when its script is requested. Tag Manager can load analytics or advertising tags depending on the container configuration. The cookies, data collection, and recipients of any additional tags depend on that configuration; these details must be reviewed and this policy updated when tags change.</p><p>The current site does not implement a consent banner or change tag loading in response to a browser’s Do Not Track signal. You can control storage and scripts through your browser settings. Blocking storage may prevent your bag from being saved.</p><p>Read <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google’s privacy policy</a> for information about Google’s handling of data.</p></>,
+        id: "sharing", title: "4. Sharing your information",
+        content: <><p>Noksa does not sell personal information for money. We may share limited information with service providers when needed to operate our business, including payment processors, shipping and delivery companies, website and e-commerce providers, analytics and marketing providers, and legal or regulatory authorities when required by law.</p><p>Service providers should receive only the information reasonably needed to perform their services and are subject to applicable contractual and legal requirements.</p></>,
       },
       {
-        id: "service-providers", title: "Service providers & external sites",
-        content: <p>Website hosting, image delivery, and Google Tag Manager involve third-party services that process the requests sent to them. External retailer links, if used, take you to services with their own privacy policies. Future checkout, delivery, or marketing services will require updated disclosures before they are introduced.</p>,
+        id: "cookies", title: "5. Cookies and similar technologies",
+        content: <><p>Our website may use cookies and similar technologies to remember preferences, support essential shopping functions, understand website traffic, improve performance, and measure marketing effectiveness. For example, your shopping bag is saved in your browser’s local storage, and the site loads Google Tag Manager, which may load analytics or advertising tags (see <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google’s privacy policy</a>).</p><p>You can manage cookies through your browser settings. Disabling certain cookies may affect some website features. Where required by law, we will provide appropriate cookie choices and disclosures.</p></>,
       },
       {
-        id: "retention", title: "Storage, retention & security",
-        content: <p>Saved bag data remains in your browser until it is changed or cleared. Retention of hosting and third-party logs depends on the relevant service configuration. We do not yet publish a fixed retention period for those logs. No online system can guarantee absolute security; avoid sending payment details or sensitive information through an unverified contact channel.</p>,
+        id: "payment-security", title: "6. Payment security",
+        content: <><p>Payments are handled through third-party payment processors and their payment systems. Payment information is subject to the privacy and security practices of the relevant provider.</p><p>Noksa takes reasonable measures to protect customer information against unauthorized access, misuse, alteration, or disclosure. However, no online transmission or electronic storage system can be guaranteed to be completely secure.</p></>,
       },
       {
-        id: "choices", title: "Your choices & privacy requests",
-        content: <p>You can clear site storage and manage scripts through your browser. Depending on where you live and the laws that apply, you may have rights concerning access, correction, deletion, or other uses of personal information. Public support and privacy request contact details will be listed on the <Link href="/contact">contact page</Link> when available. No automated privacy request form is currently provided.</p>,
+        id: "retention", title: "7. Data retention",
+        content: <><p>We retain personal information for as long as reasonably necessary to fulfill orders, provide customer support, maintain business records, resolve disputes, and meet applicable legal obligations.</p><p>When information is no longer needed, we take reasonable steps to delete it or securely dispose of it, subject to legal retention requirements.</p></>,
       },
       {
-        id: "children", title: "Children’s privacy",
-        content: <p>This storefront is intended for a general audience and is not directed to children under 13. There is no shopper registration or checkout form on the current site.</p>,
+        id: "rights", title: "8. Your privacy rights",
+        content: <><p>Depending on your location and applicable law, including certain U.S. state privacy laws, you may have rights to request access to, correction of, or deletion of certain personal information; obtain a copy of certain information; opt out of certain targeted advertising or other covered processing; or withdraw consent where processing is based on consent.</p><p>To submit a request, contact us using the details in the <a href="#contact">Contact us</a> section. We may need to verify your identity before acting on certain requests. We will not unlawfully discriminate against you for exercising applicable privacy rights.</p><p>The rights available to you depend on the law that applies to your circumstances.</p></>,
       },
       {
-        id: "updates", title: "Policy updates",
-        content: <p>Changes will be posted on this page with a revised update date. We will revisit this policy when support channels, checkout, analytics, advertising, or other data collection changes.</p>,
+        id: "third-parties", title: "9. Third-party websites and marketplaces",
+        content: <p>Our website may link to third-party platforms, including Amazon and other online marketplaces. These platforms operate independently and have their own privacy policies and terms. Noksa is not responsible for the privacy practices of external websites. Please review their policies before sharing personal information with them.</p>,
+      },
+      {
+        id: "children", title: "10. Children’s privacy",
+        content: <p>Our website is not directed to children under 13, and we do not knowingly collect personal information online from children under 13 for our own purposes without appropriate parental consent. If we learn that we have collected such information improperly, we will take reasonable steps to address it.</p>,
+      },
+      {
+        id: "international", title: "11. International customers and data transfers",
+        content: <><p>Noksa is a Bangladesh-based brand serving customers in international markets, including the United States. Information may be processed or stored in Bangladesh or other countries where our service providers operate.</p><p>Where required by applicable law, we take appropriate measures for international transfers of personal information.</p></>,
+      },
+      {
+        id: "changes", title: "12. Changes to this privacy policy",
+        content: <p>We may update this Privacy Policy to reflect changes in our business practices, services, or applicable laws. We will publish updates on this page and revise the effective date. We encourage you to review this policy periodically.</p>,
+      },
+      {
+        id: "contact", title: "13. Contact us",
+        content: <><p>If you have questions about this Privacy Policy, your personal information, or a privacy-rights request, please contact us:</p><p><strong>Noksa Customer Support</strong><br />Website: <a href="https://noksaofficial.com" target="_blank" rel="noopener noreferrer">noksaofficial.com</a><br />Contact: see our <Link href="/contact">contact page</Link><br />Business location: Bangladesh</p><p>At Noksa, we believe trust is built through honesty, care, and transparency. Thank you for choosing thoughtfully crafted products and being part of our journey.</p></>,
       },
     ],
   },

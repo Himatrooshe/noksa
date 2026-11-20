@@ -26,9 +26,10 @@ export default async function StorefrontLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const products = await getProducts({ status: "storefront" });
-  const cartProducts = products.map(({ id, slug, name, trackInventory, continueSelling, options, variants }) => ({
+  const cartProducts = products.map(({ id, slug, name, trackInventory, continueSelling, options, variants, media }) => ({
     id, slug, name, trackInventory, continueSelling, options,
-    variants: variants.map(({ id, title, price, stock }) => ({ id, title, price, stock })),
+    image: media[0]?.url ?? null,
+    variants: variants.map(({ id, title, price, compareAtPrice, stock }) => ({ id, title, price, compareAtPrice, stock })),
   }));
   return (
     <html lang="en">

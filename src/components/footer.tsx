@@ -17,6 +17,7 @@ export function Footer() {
           <h3>Explore</h3>
           <Link href="/shop">Shop the collection</Link>
           <Link href="/about">Our story</Link>
+          <Link href="/blog">Blog</Link>
           <Link href="/#custom-orders">Custom & bulk orders</Link>
           <Link href="/contact">Contact</Link>
         </div>

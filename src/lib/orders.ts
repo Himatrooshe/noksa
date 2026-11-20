@@ -4,7 +4,7 @@
 export type OrderStatus = "open" | "archived" | "cancelled";
 export type PaymentStatus = "pending" | "paid" | "refunded" | "voided";
 export type FulfillmentStatus = "unfulfilled" | "fulfilled" | "delivered";
-export type PaymentMethod = "cod" | "bkash" | "nagad" | "bank_transfer" | "cash" | "other";
+export type PaymentMethod = "cod" | "bkash" | "nagad" | "bank_transfer" | "cash" | "card" | "other";
 
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "cod", label: "Cash on delivery" },
@@ -12,6 +12,7 @@ export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "nagad", label: "Nagad" },
   { value: "bank_transfer", label: "Bank transfer" },
   { value: "cash", label: "Cash (in person)" },
+  { value: "card", label: "Card (Stripe)" },
   { value: "other", label: "Other" },
 ];
 

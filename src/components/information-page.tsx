@@ -7,6 +7,8 @@ export type InformationContent = {
   description: string;
   intro: string;
   policy?: boolean;
+  /** Overrides the default "Last updated" line on policy pages. */
+  updatedLabel?: string;
   sections: { id: string; title: string; content: ReactNode }[];
 };
 
@@ -25,7 +27,9 @@ export function InformationPage({
       <header className="information-heading">
         <h1>{content.title}</h1>
         <p>{content.intro}</p>
-        {content.policy && <p className="information-date">Last updated: November 16, 2026</p>}
+        {content.policy && (
+          <p className="information-date">{content.updatedLabel ?? "Last updated: November 16, 2026"}</p>
+        )}
       </header>
       <div className="information-layout">
         <aside className="information-sidebar">

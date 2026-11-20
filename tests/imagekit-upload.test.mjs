@@ -38,3 +38,43 @@ test("uses server authentication and returns only public media metadata", async 
     if (original.endpoint === undefined) delete process.env.IMAGEKIT_URL_ENDPOINT; else process.env.IMAGEKIT_URL_ENDPOINT = original.endpoint;
   }
 });
+
+test("signs direct video uploads without exposing the private key", async () => {
+  const { videoUploadAuth } = await import("../src/lib/imagekit-upload.mjs");
+  const { createHmac } = await import("node:crypto");
+  const saved = { key: process.env.IMAGEKIT_PRIVATE_KEY, pub: process.env.IMAGEKIT_PUBLIC_KEY, endpoint: process.env.IMAGEKIT_URL_ENDPOINT };
+  process.env.IMAGEKIT_PRIVATE_KEY = "test-private-key";
+  process.env.IMAGEKIT_PUBLIC_KEY = "test-public-key";
+  process.env.IMAGEKIT_URL_ENDPOINT = "https://ik.imagekit.io/test";
+  try {
+    const auth = videoUploadAuth(1_000_000_000_000);
+    assert.equal(auth.expire, 1_000_000_000 + 1800);
+    assert.equal(auth.publicKey, "test-public-key");
+    assert.equal(auth.folder, "/noksa/videos");
+    assert.equal(auth.signature, createHmac("sha1", "test-private-key").update(auth.token + auth.expire).digest("hex"));
+    assert.ok(!JSON.stringify(auth).includes("test-private-key"));
+  } finally {
+    for (const [name, value] of [["IMAGEKIT_PRIVATE_KEY", saved.key], ["IMAGEKIT_PUBLIC_KEY", saved.pub], ["IMAGEKIT_URL_ENDPOINT", saved.endpoint]]) {
+      if (value === undefined) delete process.env[name]; else process.env[name] = value;
+    }
+  }
+});
+
+test("accepts only videos from this account's upload folder", async () => {
+  const { isOwnVideoUrl } = await import("../src/lib/imagekit-upload.mjs");
+  const saved = { key: process.env.IMAGEKIT_PRIVATE_KEY, endpoint: process.env.IMAGEKIT_URL_ENDPOINT };
+  process.env.IMAGEKIT_PRIVATE_KEY = "test-private-key";
+  process.env.IMAGEKIT_URL_ENDPOINT = "https://ik.imagekit.io/test";
+  try {
+    assert.equal(isOwnVideoUrl("https://ik.imagekit.io/test/noksa/videos/clip_abc.mp4"), true);
+    assert.equal(isOwnVideoUrl("https://ik.imagekit.io/other/noksa/videos/clip.mp4"), false);
+    assert.equal(isOwnVideoUrl("https://ik.imagekit.io/test/noksa/products/clip.mp4"), false);
+    assert.equal(isOwnVideoUrl("https://evil.example/test/noksa/videos/clip.mp4"), false);
+    assert.equal(isOwnVideoUrl("https://ik.imagekit.io/test/noksa/videos/clip.mp4?tr=x"), false);
+    assert.equal(isOwnVideoUrl("javascript:alert(1)"), false);
+  } finally {
+    for (const [name, value] of [["IMAGEKIT_PRIVATE_KEY", saved.key], ["IMAGEKIT_URL_ENDPOINT", saved.endpoint]]) {
+      if (value === undefined) delete process.env[name]; else process.env[name] = value;
+    }
+  }
+});
